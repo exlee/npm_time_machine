@@ -12,28 +12,14 @@
 // --no-git
 mod cache;
 mod npm;
+mod pkg_reader;
 
 use clap::Parser;
+use semver::Comparator;
 use time::Date;
 use time::macros::format_description;
 
-struct PackageJson {
-    dependencies: Vec<String>,
-}
-
 fn check_for_git() {}
-
-fn read_package_json() -> PackageJson {
-    let dependencies: Vec<String> = vec![
-        "express".into(),
-        //"emotion".into(),
-        //"react".into(),
-        // "react-router".into(),
-        // "redux".into(),
-    ];
-
-    PackageJson { dependencies }
-}
 
 pub fn date_from_str(value: &str) -> Result<Date, time::error::Parse> {
     let format = format_description!("[day padding:zero]-[month padding:zero repr:numerical]-[year]");
@@ -46,22 +32,25 @@ struct CliArgs {
     date: Date
 }
 
+use std::path::Path;
 use std::sync::Arc;
 use tokio::task::JoinSet;
 
 #[tokio::main]
 async fn main() {
-    cache::ensure_cache_dir().await;
+    cache::ensure_cache_dir();
 
     let args = CliArgs::parse();
+    let file = Path::new("./sample_data/package.json");
+    let reader = Arc::new(pkg_reader::PkgReader::from_path(file.into()));
+
     println!("{:?}", args);
     check_for_git();
     let registry = Arc::new(npm::Registry::new());
-    let package_json = read_package_json();
 
     let mut task_set = JoinSet::new();
 
-    for dependency in package_json.dependencies.iter().cloned() {
+    for dependency in reader.dependencies().iter().cloned() {
         let registry = registry.clone();
         task_set.spawn(async move {
             registry.load(&dependency).await;
@@ -73,16 +62,19 @@ async fn main() {
     while let Some(_) = task_set.join_next().await {}
 
     let mut task_set = JoinSet::new();
-
-    for dependency in package_json.dependencies.iter().cloned() {
+    for dependency in reader.dependencies().iter().cloned() {
         let registry = registry.clone();
+        let reader = reader.clone();
         let date = args.date.clone();
         task_set.spawn(async move {
-            registry.get_latest(dependency, date).await
+            let comparator: Comparator = reader.comparator(&dependency);
+            let Some(latest_at_date) = registry.get_latest(&dependency, date) else { return };
+            let Some(latest_matching) = registry.get_latest_matching(&dependency, &comparator) else { return };
+            let comparision = latest_at_date.cmp(&latest_matching);
+
+            println!("{dependency}: {:?} --> {:?} ({comparision:?})", latest_at_date.to_string(), latest_matching.to_string());
         });
     }
 
-    while let Some(r) = task_set.join_next().await {
-        println!("{:?}", r);
-    }
+    while let Some(_) = task_set.join_next().await {}
 }

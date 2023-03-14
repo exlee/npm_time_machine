@@ -1,10 +1,9 @@
 use std::collections::HashMap;
-use semver::Version;
+use semver::{Version, Comparator};
 use serde::{Serialize, Deserialize};
 use time::{ OffsetDateTime, Date };
 use time::format_description::well_known::Rfc3339;
 use tokio::sync::{ Semaphore, SemaphorePermit };
-use std::future::Future;
 use std::sync::{Arc, Mutex};
 use crate::cache;
 
@@ -32,18 +31,21 @@ impl Registry {
             &(library.to_owned() + ".vit"),
             || async {
                 let permit: SemaphorePermit = self.get_permit().await;
-                let result: NPMRegistryJSON = self.client
+                let result: Result<NPMRegistryJSON, _> = self.client
                     .get(format!("https://registry.npmjs.org/{library}"))
                     .send()
                     .await
                     // HTTP Connection failed
                     .unwrap()
                     .json()
-                    .await
-                    // JSON not returned
-                    .unwrap();
+                    .await;
 
                 drop(permit);
+                let Ok(result) = result else {
+                    return vec![]
+                };
+
+
                 let mut transformed: VersionInTime = vec![];
                 for (key, value) in result.time.into_iter() {
                     let version = Version::parse(&key);
@@ -59,7 +61,7 @@ impl Registry {
         ).await;
         let mut store = self.versions.lock().unwrap();
         store.insert(library.into(), result);
-        println!("Loaded!");
+        //println!("Loaded!");
         //println!("{:?}", store);
     }
 
@@ -75,7 +77,7 @@ impl Registry {
         }
     }
 
-    pub async fn get_latest(&self, library: String, date: Date) -> (String, Version) {
+    pub fn get_latest(&self, library: &str, date: Date) -> Option<Version> {
         let mut versions: VersionInTime  = self.versions_copy(&library).expect("Library data not loaded!");
         let mut i = 0;
 
@@ -101,11 +103,29 @@ impl Registry {
             }
         });
 
-
-        (library, versions.last().unwrap().0.clone())
-
+        Some(versions.last()?.0.clone())
     }
 
+    pub fn get_latest_matching(&self, library: &str, comparator: &Comparator) -> Option<Version> {
+        let versions: VersionInTime  = self.versions_copy(&library).expect("Library data not loaded!");
+        let mut versions: Vec<Version> = versions.into_iter().map(|(v, _)| v).collect();
+
+        versions.sort_by(|a, b| {
+            a.cmp(b)
+        });
+
+        let mut i = 0;
+        while i < versions.len() {
+            if !comparator.matches(&versions[i]) {
+                versions.remove(i);
+                continue;
+            }
+
+            i = i + 1;
+        };
+
+        Some(versions.last()?.clone())
+    }
 
 }
 

@@ -8,10 +8,12 @@ use std::path::{Path, PathBuf};
 const CACHE_DIR: &str = ".npm_time_machine_cache";
 
 fn get_cache_file(key: &str) -> PathBuf {
-    Path::new(CACHE_DIR).join(key)
+    let cleaned_key = key.replace("/", "||");
+    Path::new(CACHE_DIR).join(cleaned_key)
 }
 
 fn cache_get<T: DeserializeOwned>(key: &str) -> Option<T> {
+
     let file_open = std::fs::File::open(get_cache_file(key));
     if file_open.is_err() {
         return None;
@@ -23,14 +25,15 @@ fn cache_get<T: DeserializeOwned>(key: &str) -> Option<T> {
 fn cache_put<T: ?Sized + Serialize>(key: &str, data: &T) {
     let cache_file = get_cache_file(key);
 
-    let mut f = std::fs::File::create(cache_file).expect("Can't create cache file");
+    let mut f = std::fs::File::create(cache_file.clone()).expect(&format!("Can't create cache file: {:?}", &cache_file));
     let serialized_string = serde_json::ser::to_string::<T>(data).expect("Can't serialize!");
     f.write_all(&serialized_string.into_bytes())
         .expect("Can't write!");
 }
 
-pub async fn ensure_cache_dir() {
+pub fn ensure_cache_dir() {
     let cache_path = Path::new(CACHE_DIR);
+
     if !cache_path.exists() {
         create_dir(cache_path).expect("Cannot create cache path!")
     }
@@ -43,10 +46,10 @@ where
     T: Serialize + DeserializeOwned,
 {
     if let Some(cached) = cache_get(key) {
-        println!("Returning from cache");
+        //println!("Returning from cache");
         cached
     } else {
-        println!("Loading info...");
+        println!("Loading info for {key}...");
         let result = closure().await;
         cache_put(key, &result);
         result
