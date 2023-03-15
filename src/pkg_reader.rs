@@ -7,7 +7,6 @@ pub struct PkgReader {
     json: Value,
     dependencies: Vec<String>,
     comparators: HashMap<String, Comparator>,
-
 }
 
 impl PkgReader {
@@ -23,7 +22,10 @@ impl PkgReader {
             dependencies,
             comparators
         }
+    }
 
+    pub fn json(&self) -> Value {
+        self.json.clone()
     }
 
     fn process(json: &Value) -> (Vec<String>, HashMap<String, Comparator>){
