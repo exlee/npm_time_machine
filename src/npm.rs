@@ -1,11 +1,11 @@
-use std::collections::HashMap;
-use semver::{Version, Comparator};
-use serde::{Serialize, Deserialize};
-use time::{ OffsetDateTime, Date };
-use time::format_description::well_known::Rfc3339;
-use tokio::sync::{ Semaphore, SemaphorePermit };
-use std::sync::{Arc, Mutex};
 use crate::cache;
+use semver::{Comparator, Version};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use time::format_description::well_known::Rfc3339;
+use time::{Date, OffsetDateTime};
+use tokio::sync::{Semaphore, SemaphorePermit};
 
 type VersionInTime = Vec<(Version, OffsetDateTime)>;
 type InternalData = Arc<Mutex<HashMap<String, VersionInTime>>>;
@@ -27,11 +27,11 @@ impl Registry {
     }
 
     pub async fn load(&self, library: &str) {
-        let result = cache::cached::<VersionInTime, _, _>(
-            &(library.to_owned() + ".vit"),
-            || async {
+        let result =
+            cache::cached::<VersionInTime, _, _>(&(library.to_owned() + ".vit"), || async {
                 let permit: SemaphorePermit = self.get_permit().await;
-                let result: Result<NPMRegistryJSON, _> = self.client
+                let result: Result<NPMRegistryJSON, _> = self
+                    .client
                     .get(format!("https://registry.npmjs.org/{library}"))
                     .send()
                     .await
@@ -45,7 +45,6 @@ impl Registry {
                     return vec![]
                 };
 
-
                 let mut transformed: VersionInTime = vec![];
                 for (key, value) in result.time.into_iter() {
                     let version = Version::parse(&key);
@@ -54,11 +53,10 @@ impl Registry {
                     if let (Ok(version), Ok(time)) = (version, time) {
                         transformed.push((version, time))
                     }
-
                 }
                 transformed
-            }
-        ).await;
+            })
+            .await;
         let mut store = self.versions.lock().unwrap();
         store.insert(library.into(), result);
         //println!("Loaded!");
@@ -78,9 +76,10 @@ impl Registry {
     }
 
     pub fn get_latest(&self, library: &str, date: Date) -> Option<Version> {
-        let mut versions: VersionInTime  = self.versions_copy(&library).expect("Library data not loaded!");
+        let mut versions: VersionInTime = self
+            .versions_copy(library)
+            .expect("Library data not loaded!");
         let mut i = 0;
-
 
         while i < versions.len() {
             if !versions[i].0.pre.is_empty() {
@@ -93,26 +92,24 @@ impl Registry {
                 continue;
             }
 
-            i = i + 1;
+            i += 1;
         }
 
-        versions.sort_by(|a, b| {
-            match a.0.partial_cmp(&b.0) {
-                Some(std::cmp::Ordering::Equal) => a.1.partial_cmp(&b.1).unwrap(),
-                result => result.unwrap()
-            }
+        versions.sort_by(|a, b| match a.0.partial_cmp(&b.0) {
+            Some(std::cmp::Ordering::Equal) => a.1.partial_cmp(&b.1).unwrap(),
+            result => result.unwrap(),
         });
 
         Some(versions.last()?.0.clone())
     }
 
     pub fn get_latest_matching(&self, library: &str, comparator: &Comparator) -> Option<Version> {
-        let versions: VersionInTime  = self.versions_copy(&library).expect("Library data not loaded!");
+        let versions: VersionInTime = self
+            .versions_copy(library)
+            .expect("Library data not loaded!");
         let mut versions: Vec<Version> = versions.into_iter().map(|(v, _)| v).collect();
 
-        versions.sort_by(|a, b| {
-            a.cmp(b)
-        });
+        versions.sort_by(|a, b| a.cmp(b));
 
         let mut i = 0;
         while i < versions.len() {
@@ -121,12 +118,11 @@ impl Registry {
                 continue;
             }
 
-            i = i + 1;
-        };
+            i += 1;
+        }
 
         Some(versions.last()?.clone())
     }
-
 }
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -1,7 +1,7 @@
-use std::path::PathBuf;
+use semver::Comparator;
 use serde_json::Value;
 use std::collections::HashMap;
-use semver::Comparator;
+use std::path::PathBuf;
 
 pub struct PkgReader {
     json: Value,
@@ -20,7 +20,7 @@ impl PkgReader {
         Self {
             json,
             dependencies,
-            comparators
+            comparators,
         }
     }
 
@@ -28,7 +28,7 @@ impl PkgReader {
         self.json.clone()
     }
 
-    fn process(json: &Value) -> (Vec<String>, HashMap<String, Comparator>){
+    fn process(json: &Value) -> (Vec<String>, HashMap<String, Comparator>) {
         let mut deps: Vec<String> = vec![];
         let mut comps: HashMap<String, Comparator> = HashMap::new();
         let Some(dep_value) = json.get("dependencies") else {
@@ -55,6 +55,6 @@ impl PkgReader {
     }
 
     pub fn comparator(&self, library: &str) -> Comparator {
-        self.comparators.get(library.into()).unwrap().clone()
+        self.comparators.get(library).unwrap().clone()
     }
 }
