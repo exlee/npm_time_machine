@@ -1,15 +1,3 @@
-// package.json loader
-// package.json modifier
-
-// serializer for npm data
-// cache
-// npm query call
-
-// params --no-cache
-// -f <...> for package file
-// -o <...> outputfile
-// git warn
-// --no-git
 mod cache;
 mod changes;
 mod error;
@@ -37,17 +25,19 @@ pub fn date_from_str(value: &str) -> Result<Date, time::error::Parse> {
 
 /// NPM Time Machine - Move package.json through the time!
 ///
-/// This utility allows to lock package.json into the latest state
-/// at given time (but not older than input).
+/// Utility which locks package.json into the latest state at given time (but not older than input).
 ///
-/// E.g. with package.json set to React 0.0.1
-/// npm_time_machine 27-09-2017 -> React 16.0.0
-/// npm_time_machine 21-10-2020 -> React 17.0.0
+/// Example:
+/// For package.json with React 0.0.1:
 ///
-/// but.. for React 18.0.0
+/// npm_time_machine 27-09-2017 ->  React 16.0.0
+/// npm_time_machine 21-10-2020 ->  React 17.0.0
+///
+/// for package.json with React 18.0.0:
+///
 /// npm_time_machine 27-09-2017 -x- NO CHANGE
 #[derive(Parser, Debug, Clone)]
-#[command(name = "npm_time_machine")]
+#[command(name = "npm_time_machine", verbatim_doc_comment)]
 pub struct CliArgs {
     /// Date for which to move (format: DD-MM-YYYY)
     #[arg(value_parser=crate::date_from_str)]
