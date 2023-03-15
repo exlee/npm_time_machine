@@ -4,6 +4,7 @@ use std::fs::create_dir;
 use std::future::Future;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::Ordering;
 
 const CACHE_DIR: &str = ".npm_time_machine_cache";
 
@@ -45,13 +46,15 @@ where
     Fut: Future<Output = T>,
     T: Serialize + DeserializeOwned,
 {
-    if let Some(cached) = cache_get(key) {
-        //println!("Returning from cache");
-        cached
-    } else {
-        println!("Loading info for {key}...");
-        let result = closure().await;
-        cache_put(key, &result);
-        result
+    let cache: Option<T> = cache_get(key);
+
+    if !crate::USE_CACHE.load(Ordering::Relaxed) ||
+        cache.is_none()
+    {
+        return closure().await
     }
+
+    let result = closure().await;
+    cache_put(key, &result);
+    result
 }

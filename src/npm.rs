@@ -59,8 +59,6 @@ impl Registry {
             .await;
         let mut store = self.versions.lock().unwrap();
         store.insert(library.into(), result);
-        //println!("Loaded!");
-        //println!("{:?}", store);
     }
 
     async fn get_permit(&self) -> SemaphorePermit {
