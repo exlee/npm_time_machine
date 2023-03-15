@@ -15,6 +15,7 @@ mod changes;
 mod npm;
 mod pkg_reader;
 mod npm_time_machine;
+mod error;
 
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -23,6 +24,8 @@ use std::time::Instant;
 use clap::Parser;
 use time::macros::format_description;
 use time::Date;
+
+use error::AppError;
 
 pub static USE_CACHE: AtomicBool = AtomicBool::new(true);
 
@@ -43,7 +46,7 @@ pub fn date_from_str(value: &str) -> Result<Date, time::error::Parse> {
 ///
 /// but.. for React 18.0.0
 /// npm_time_machine 27-09-2017 -x- NO CHANGE
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(name="npm_time_machine")]
 pub struct CliArgs {
     /// Date for which to move (format: DD-MM-YYYY)
@@ -67,6 +70,9 @@ async fn main() {
     let args = CliArgs::parse();
     USE_CACHE.swap(!args.no_cache, Ordering::Relaxed);
 
-    npm_time_machine::run(args).await;
-    println!("Done. Took {} seconds.", now.elapsed().as_secs_f32());
+    match npm_time_machine::run(args.clone()).await {
+        Err(AppError::NoPackageFile) => eprintln!("Error: Package input file ({}) couldn't be found. Exiting.", args.input_file.display()),
+        Err(AppError::PackageFileNotJson) => eprintln!("Error: Package input file ({}) doesn't seem to be valid JSON. Exiting.", args.input_file.display()),
+        _ => println!("Done. Took {} seconds.", now.elapsed().as_secs_f32())
+    }
 }

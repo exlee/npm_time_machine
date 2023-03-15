@@ -2,6 +2,7 @@ use semver::Comparator;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use crate::error::AppError;
 
 pub struct PkgReader {
     json: Value,
@@ -10,18 +11,18 @@ pub struct PkgReader {
 }
 
 impl PkgReader {
-    pub fn from_path(file: PathBuf) -> Self {
-        let handle = std::fs::File::open(file).expect("Can't open package file");
+    pub fn from_path(file: PathBuf) -> Result<Self,AppError>   {
+        let handle = std::fs::File::open(file).or(Err(AppError::NoPackageFile))?;
         let reader = std::io::BufReader::new(handle);
-        let json: Value = serde_json::from_reader(reader).expect("Can't parse to JSON");
+        let json: Value = serde_json::from_reader(reader).or(Err(AppError::PackageFileNotJson))?;
 
         let (dependencies, comparators) = Self::process(&json);
 
-        Self {
+        Ok(Self {
             json,
             dependencies,
             comparators,
-        }
+        })
     }
 
     pub fn json(&self) -> Value {

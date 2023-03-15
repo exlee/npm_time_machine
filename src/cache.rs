@@ -46,12 +46,10 @@ where
     Fut: Future<Output = T>,
     T: Serialize + DeserializeOwned,
 {
-    let cache: Option<T> = cache_get(key);
-
-    if !crate::USE_CACHE.load(Ordering::Relaxed) ||
-        cache.is_none()
-    {
-        return closure().await
+    if crate::USE_CACHE.load(Ordering::Relaxed) {
+        if let Some(result) = cache_get(key) {
+            return result;
+        }
     }
 
     let result = closure().await;

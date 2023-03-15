@@ -4,6 +4,7 @@ use crate::npm::Registry;
 use crate::pkg_reader::PkgReader;
 
 use crate::CliArgs;
+use crate::error::AppError;
 
 use std::fs::File;
 use std::io::Write;
@@ -20,19 +21,21 @@ struct TimeMachine {
     args: Arc<CliArgs>,
 }
 
-pub async fn run(args: CliArgs) {
+pub async fn run(args: CliArgs) -> Result<(), AppError> {
     cache::ensure_cache_dir();
 
     let machine = TimeMachine {
         changes: Changes::new(),
         registry: Arc::new(Registry::new()),
-        reader: Arc::new(PkgReader::from_path(args.input_file.clone())),
+        reader: Arc::new(PkgReader::from_path(args.input_file.clone())?),
         args: Arc::new(args),
     };
 
     machine.load_registry().await;
     machine.find_changes().await;
     machine.write_json();
+
+    Ok(())
 }
 
 impl TimeMachine {
