@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use serde_json::{ Value, json };
+use serde_json::Value;
 use std::collections::HashMap;
 use semver::Comparator;
 

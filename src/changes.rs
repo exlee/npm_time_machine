@@ -11,17 +11,21 @@ impl Changes {
         return Self(Arc::new(Mutex::new(Inner::new())))
     }
 
-    pub fn into_inner(obj: Self) -> Inner {
-        let mutex = Arc::try_unwrap(obj.0).unwrap();
-        mutex.into_inner().unwrap()
-
-    }
     pub fn insert(&self, key: String, value: semver::Version) {
         let my_clone = self.clone();
         let mut mutable = my_clone.0.lock().unwrap();
         mutable.insert(key, value);
     }
 
+}
+
+impl IntoIterator for Changes {
+    type Item = (String,Version);
+    type IntoIter = std::collections::hash_map::IntoIter<String, Version>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.lock().unwrap().clone().into_iter()
+    }
 }
 
 impl Clone for Changes {
