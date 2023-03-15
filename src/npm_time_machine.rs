@@ -3,8 +3,8 @@ use crate::changes::Changes;
 use crate::npm::Registry;
 use crate::pkg_reader::PkgReader;
 
-use crate::CliArgs;
 use crate::error::AppError;
+use crate::CliArgs;
 
 use std::fs::File;
 use std::io::Write;
@@ -50,7 +50,7 @@ impl TimeMachine {
                 dependency
             });
         }
-        while let Some(_) = task_set.join_next().await {}
+        while (task_set.join_next().await).is_some() {}
     }
 
     pub async fn find_changes(&self) {
@@ -62,17 +62,16 @@ impl TimeMachine {
             let changes = self.changes.clone();
 
             task_set.spawn(async move {
-            let comparator: Comparator = reader.comparator(&dependency);
-            let Some(latest_at_date) = registry.get_latest(&dependency, date) else { return };
-            let Some(latest_matching) = registry.get_latest_matching(&dependency, &comparator) else { return };
+                let comparator: Comparator = reader.comparator(&dependency);
+                let Some(latest_at_date) = registry.get_latest(&dependency, date) else { return };
+                let Some(latest_matching) = registry.get_latest_matching(&dependency, &comparator) else { return };
 
-            if std::cmp::Ordering::Greater == latest_at_date.cmp(&latest_matching) {
-                changes.insert(dependency, latest_at_date);
-            }
-        });
+                if std::cmp::Ordering::Greater == latest_at_date.cmp(&latest_matching) {
+                    changes.insert(dependency, latest_at_date);
+                }
+            });
         }
-
-        while let Some(_) = task_set.join_next().await {}
+        while (task_set.join_next().await).is_some() {}
     }
 
     pub fn write_json(&self) {

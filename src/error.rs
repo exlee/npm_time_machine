@@ -1,4 +1,4 @@
 pub enum AppError {
     NoPackageFile,
-    PackageFileNotJson
+    PackageFileNotJson,
 }

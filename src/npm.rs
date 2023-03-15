@@ -107,7 +107,7 @@ impl Registry {
             .expect("Library data not loaded!");
         let mut versions: Vec<Version> = versions.into_iter().map(|(v, _)| v).collect();
 
-        versions.sort_by(|a, b| a.cmp(b));
+        versions.sort();
 
         let mut i = 0;
         while i < versions.len() {
