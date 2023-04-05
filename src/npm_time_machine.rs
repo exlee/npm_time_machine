@@ -16,6 +16,7 @@ use crate::cache;
 use crate::changes::Changes;
 use crate::npm::Registry;
 use crate::pkg_reader::PkgReader;
+use crate::printer;
 
 use crate::error::AppError;
 use crate::CliArgs;
@@ -84,6 +85,7 @@ impl TimeMachine {
                 let Some(latest_matching) = registry.get_latest_matching(&dependency, &comparator) else { return };
 
                 if std::cmp::Ordering::Greater == latest_at_date.cmp(&latest_matching) {
+                    printer::print(&format!("{:30} {:>10} => {:<10}", &dependency, latest_matching, &latest_at_date));
                     changes.insert(dependency, latest_at_date);
                 }
             });

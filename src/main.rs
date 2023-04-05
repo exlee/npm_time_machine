@@ -18,6 +18,7 @@ mod error;
 mod npm;
 mod npm_time_machine;
 mod pkg_reader;
+mod printer;
 
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -30,6 +31,7 @@ use time::Date;
 use error::AppError;
 
 pub static USE_CACHE: AtomicBool = AtomicBool::new(true);
+pub static VERBOSE: AtomicBool = AtomicBool::new(true);
 
 pub fn date_from_str(value: &str) -> Result<Date, time::error::Parse> {
     let format =
@@ -51,7 +53,7 @@ pub fn date_from_str(value: &str) -> Result<Date, time::error::Parse> {
 ///
 /// npm_time_machine 27-09-2017 -x- NO CHANGE
 #[derive(Parser, Debug, Clone)]
-#[command(name = "npm_time_machine", verbatim_doc_comment)]
+#[command(name = "npm_time_machine", verbatim_doc_comment, arg_required_else_help(true))]
 pub struct CliArgs {
     /// Date for which to move (format: DD-MM-YYYY)
     #[arg(value_parser=crate::date_from_str)]
@@ -63,6 +65,9 @@ pub struct CliArgs {
     /// Don't use / reload cache
     #[arg(long)]
     no_cache: bool,
+    /// Silent mode
+    #[arg(long)]
+    silent: bool,
     /// Dry run - show changes only
     #[arg(long)]
     dry_run: bool,
@@ -71,11 +76,13 @@ pub struct CliArgs {
 #[tokio::main]
 async fn main() {
     let now = Instant::now();
-    println!("Processing...\n");
+
     cache::ensure_cache_dir();
 
     let args = CliArgs::parse();
+    printer::print("Processing...\n");
     USE_CACHE.swap(!args.no_cache, Ordering::Relaxed);
+    VERBOSE.swap(!args.silent, Ordering::Relaxed);
 
     match npm_time_machine::run(args.clone()).await {
         Err(AppError::NoPackageFile) => eprintln!(
@@ -86,6 +93,10 @@ async fn main() {
             "Error: Package input file ({}) doesn't seem to be valid JSON. Exiting.",
             args.input_file.display()
         ),
-        _ => println!("Done. Took {} seconds.", now.elapsed().as_secs_f32()),
+        _ => printer::print(&format!("\nDone. Took {} seconds.", now.elapsed().as_secs_f32())),
+    }
+
+    if args.dry_run {
+        printer::print("\ndry-run - no files were written.\n");
     }
 }
