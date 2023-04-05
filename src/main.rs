@@ -63,6 +63,9 @@ pub struct CliArgs {
     /// Don't use / reload cache
     #[arg(long)]
     no_cache: bool,
+    /// Dry run - show changes only
+    #[arg(long)]
+    dry_run: bool,
 }
 
 #[tokio::main]

@@ -47,7 +47,10 @@ pub async fn run(args: CliArgs) -> Result<(), AppError> {
 
     machine.load_registry().await;
     machine.find_changes().await;
-    machine.write_json();
+
+    if !machine.args.dry_run {
+        machine.write_json();
+    }
 
     Ok(())
 }
