@@ -1,14 +1,7 @@
 {
   "name": "someproject",
   "version": "1.0.0",
-  "main": "index.js",
-  "author": "Przemysław Alexander Kamiński",
-  "license": "UNLICENSED",
   "dependencies": {
-    "@fortawesome/fontawesome": "^1.1.8",
-    "@fortawesome/fontawesome-pro-light": "^5.0.13",
-    "@fortawesome/fontawesome-pro-solid": "^5.0.13",
-    "@fortawesome/react-fontawesome": "^0.0.19",
     "apollo-cache-inmemory": "^1.2.2",
     "apollo-client": "^2.3.2",
     "apollo-link": "^1.2.2",
