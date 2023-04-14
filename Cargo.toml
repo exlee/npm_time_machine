@@ -1,8 +1,20 @@
 [package]
 name = "npm_time_machine"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 license = "Apache-2.0"
+authors = ["Przemysław Alexander Kamiński (exlee)"]
+repository = "https://github.com/exlee/npm_time_machine"
+homepage = "https://github.com/exlee/npm_time_machine"
+keywords = ["npm", "utility", "cli"]
+categories = ["command-line-utilities", "development-tools"]
+description = "Utility to move package.json through the time. Pin and upgrade your project in chunks!"
+
+exclude = [
+  "extras/*",
+  "sample_data/*",
+  ".licensesnip"
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
