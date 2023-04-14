@@ -21,7 +21,11 @@ Options:
 
 `npm_time_machine` is a `package.json` point-in-time "pinner". Given the date it'll compare `package.json` pin with latest stable version for a library and use the newer one.
 
-Intended use is to bisect dates in order to find point where upgrade can be managed. E.g. by avoiding scenarios where multiple core libraries undergo change.
+Intended use is to bisect dates to find point where upgrade span can be managed, e.g. by avoiding scenarios where multiple core libraries undergo change.
+
+### Installation
+
+`cargo install npm_time_machine`
 
 ## Resolution example
 
