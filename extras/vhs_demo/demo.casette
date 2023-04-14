@@ -1,0 +1,83 @@
+Output demo.mov
+
+Set Width 1500
+Set Height 850
+Set WindowBar Colorful
+Set FontSize 18
+Set PlaybackSpeed 0.5
+
+Sleep 2s
+Type "cat MESSAGE"
+Enter
+Sleep 3s
+Hide
+Type "clear"
+Enter
+Show
+Type "cd best_of_2018"
+Sleep 0.5s
+Enter
+Type 'jq ".dependencies.react" package.json'
+Enter
+Sleep 1s
+Type "npm view react version"
+Enter
+Sleep 3s
+Type "# 20/20: This should be done years ago..."
+Sleep 3s
+
+### Next piece ###
+Hide
+Enter
+Type "clear"
+Enter
+Show
+Sleep 1s
+### Exit piece
+
+Type "npm_time_machine"
+Enter
+Sleep 5s
+Hide
+Enter
+Type "clear"
+Enter
+Show
+Sleep 0.5s
+Type "npm_time_machine --dry-run 01-01-2021"
+Enter
+Sleep 3s
+
+### Next piece ###
+Hide
+Enter
+Type "clear"
+Enter
+Show
+Sleep 1s
+### Exit piece
+
+Type "npm_time_machine --dry-run 01-01-2019"
+Enter
+Sleep 1s
+
+Type "# Hmm... this looks good..."
+Sleep 2s
+
+### Next piece ###
+Hide
+Enter
+Type "clear"
+Enter
+Show
+Sleep 1s
+### Exit piece
+
+Type "npm_time_machine 01-01-2019 -o package.json.managable"
+Enter
+Sleep 0.5s
+Type "diff -y --suppress-common-lines package.json package.json.managable"
+Enter
+Sleep 1s
+Type "# :)"
+Sleep 5s
