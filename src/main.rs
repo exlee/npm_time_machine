@@ -55,7 +55,7 @@ pub fn date_from_str(value: &str) -> Result<Date, time::error::Parse> {
 #[derive(Parser, Debug, Clone)]
 #[command(name = "npm_time_machine", verbatim_doc_comment, arg_required_else_help(true))]
 pub struct CliArgs {
-    /// Date for which to move (format: DD-MM-YYYY)
+    /// Target date (format: DD-MM-YYYY)
     #[arg(value_parser=crate::date_from_str)]
     date: Date,
     #[arg(help = "input file", short = 'f', default_value = "package.json")]
